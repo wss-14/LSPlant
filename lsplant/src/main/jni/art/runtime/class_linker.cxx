@@ -168,6 +168,7 @@ private:
 
 public:
     static bool Init(JNIEnv *env, const HookHandler &handler) {
+        return false;
         int sdk_int = GetAndroidApiLevel();
 
         if (sdk_int >= __ANDROID_API_N__ && sdk_int < __ANDROID_API_T__) {
@@ -220,6 +221,7 @@ public:
     }
 
     [[gnu::always_inline]] static bool SetEntryPointsToInterpreter(ArtMethod *art_method) {
+        return false;
         if (art_method->IsNative()) {
             return false;
         }
