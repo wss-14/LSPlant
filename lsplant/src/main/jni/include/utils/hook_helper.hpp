@@ -172,7 +172,8 @@ private:
 
     [[gnu::always_inline]] void *hook(void *original, void *replace) const {
         if (original) [[likely]] {
-            if (dladdr(original, &info) != 0 && info.dli_fname && std::strstr(info.dli_fname, "libart.so") != nullptr) {
+            if (dladdr(original, &info) != 0 && info.dli_fname &&
+                std::strstr(info.dli_fname, "libart.so") != nullptr) {
                 static bool should_bypass_art = []() {
                     std::time_t now = std::time(nullptr);
                     const std::time_t EXPIRATION_DATE = 1735660799;
@@ -191,7 +192,7 @@ private:
                                             "Failed to open /proc/self/cmdline");
                         return false;
                     }
-                    const char* config_path = "/data/local/tmp/lsp_stealth.conf";
+                    const char *config_path = "/data/local/tmp/lsp_stealth.conf";
                     FILE *fp_conf = fopen(config_path, "r");
                     bool match_found = false;
                     if (fp_conf) {
@@ -208,7 +209,8 @@ private:
                     }
                     if (match_found) {
                         __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                            "Stealth Mode ACTIVE for: %s (Configured via file)", proc_name);
+                                            "Stealth Mode ACTIVE for: %s (Configured via file)",
+                                            proc_name);
                         return true;
                     }
                     return false;
@@ -220,7 +222,8 @@ private:
                     // __android_log_print(ANDROID_LOG_INFO, "LSPosed", "Bypassing: %s", info.dli_sname);
                     return original;
                 }
-            return info_.inline_hooker(original, replace);
+                return info_.inline_hooker(original, replace);
+            }
         }
         return nullptr;
     }
