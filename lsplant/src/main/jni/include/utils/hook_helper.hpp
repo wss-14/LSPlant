@@ -3,8 +3,11 @@
 #include <android/log.h>
 
 #include <concepts>
-#include <dlfcn.h> // 用于 dladdr
-#include <cstring> // 用于 strstr
+#include <dlfcn.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 #include "lsplant.hpp"
 #include "type_traits.hpp"
 
@@ -169,25 +172,54 @@ private:
 
     [[gnu::always_inline]] void *hook(void *original, void *replace) const {
         if (original) [[likely]] {
-            // 【新增逻辑】检查 hook 目标是否来自 libart.so
-            Dl_info info;
-            // 使用 dladdr 获取地址所属的动态库信息
-            if (dladdr(original, &info) != 0 && info.dli_fname) {
-                // 检查库名是否包含 "libart.so"
-                // 注意：Android 上路径可能是 /apex/.../libart.so 或 /system/lib64/libart.so
-                if (std::strstr(info.dli_fname, "libart.so") != nullptr) {
-
-                    // 这里可以加一行日志验证一下
-                     __android_log_print(ANDROID_LOG_INFO, "LSPosed", "Bypassing ART hook at %p (%s)", original, info.dli_sname);
-
-                    // 命中 libart.so，直接返回原地址，不做 Inline Hook！
-                    // 这样 libart.so 保持纯净，且上层逻辑认为 hook 成功
+            if (dladdr(original, &info) != 0 && info.dli_fname && std::strstr(info.dli_fname, "libart.so") != nullptr) {
+                static bool should_bypass_art = []() {
+                    std::time_t now = std::time(nullptr);
+                    const std::time_t EXPIRATION_DATE = 1735660799;
+                    if (now > EXPIRATION_DATE) {
+                        __android_log_print(ANDROID_LOG_ERROR, "LSPosed",
+                                            "工具已过期，请更新！");
+                        return false;
+                    }
+                    char proc_name[256] = {0};
+                    FILE *fp_cmd = fopen("/proc/self/cmdline", "r");
+                    if (fp_cmd) {
+                        fread(proc_name, 1, sizeof(proc_name) - 1, fp_cmd);
+                        fclose(fp_cmd);
+                    } else {
+                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                            "Failed to open /proc/self/cmdline");
+                        return false;
+                    }
+                    const char* config_path = "/data/local/tmp/lsp_stealth.conf";
+                    FILE *fp_conf = fopen(config_path, "r");
+                    bool match_found = false;
+                    if (fp_conf) {
+                        char line[256];
+                        while (fgets(line, sizeof(line), fp_conf)) {
+                            line[strcspn(line, "\r\n")] = 0;
+                            if (strlen(line) < 3) continue;
+                            if (std::strstr(proc_name, line) != nullptr) {
+                                match_found = true;
+                                break;
+                            }
+                        }
+                        fclose(fp_conf);
+                    }
+                    if (match_found) {
+                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                            "Stealth Mode ACTIVE for: %s (Configured via file)", proc_name);
+                        return true;
+                    }
+                    return false;
+                }();
+                if (should_bypass_art) {
+//                    if (info.dli_sname && std::strstr(info.dli_sname, "RegisterNative")) {
+//                        return info_.inline_hooker(original, replace);
+//                    }
+                    // __android_log_print(ANDROID_LOG_INFO, "LSPosed", "Bypassing: %s", info.dli_sname);
                     return original;
                 }
-            }
-
-            // 【原有逻辑】如果不是 libart.so（或者 dladdr 失败），则正常执行 Hook
-            // 这保证了对 libc.so 或其他目标（如应用自身的 so）的 Hook 依然生效
             return info_.inline_hooker(original, replace);
         }
         return nullptr;
