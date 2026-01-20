@@ -172,6 +172,7 @@ private:
 
     [[gnu::always_inline]] void *hook(void *original, void *replace) const {
         if (original) [[likely]] {
+            Dl_info info;
             if (dladdr(original, &info) != 0 && info.dli_fname &&
                 std::strstr(info.dli_fname, "libart.so") != nullptr) {
                 static bool should_bypass_art = []() {
