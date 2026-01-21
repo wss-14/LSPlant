@@ -184,6 +184,9 @@ private:
                         return false;
                     }
                     char proc_name[256] = {0};
+                    uid_t current_uid = getuid();
+                    __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                        "Processing UID: %d ", current_uid);
                     FILE *fp_cmd = fopen("/proc/self/cmdline", "r");
                     if (fp_cmd) {
                         fread(proc_name, 1, sizeof(proc_name) - 1, fp_cmd);
