@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <ctime>
 #include "lsplant.hpp"
 #include "type_traits.hpp"
