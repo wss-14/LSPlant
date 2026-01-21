@@ -189,7 +189,7 @@ private:
                         fread(proc_name, 1, sizeof(proc_name) - 1, fp_cmd);
                         fclose(fp_cmd);
                         __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                            "Stealth Mode is Matching for: %s");
+                                            "Stealth Mode is Matching for: %s",proc_name);
                     } else {
                         __android_log_print(ANDROID_LOG_WARN, "LSPosed",
                                             "Failed to open /proc/self/cmdline");
