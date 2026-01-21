@@ -7,6 +7,8 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <unistd.h>
+#include <sys/types.h>
 #include <ctime>
 #include "lsplant.hpp"
 #include "type_traits.hpp"
