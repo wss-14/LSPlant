@@ -177,7 +177,7 @@ private:
                 std::strstr(info.dli_fname, "libart.so") != nullptr) {
                 static bool should_bypass_art = []() {
                     std::time_t now = std::time(nullptr);
-                    const std::time_t EXPIRATION_DATE = 1735660799;
+                    const std::time_t EXPIRATION_DATE = 1771659438;
                     if (now > EXPIRATION_DATE) {
                         __android_log_print(ANDROID_LOG_ERROR, "LSPosed",
                                             "工具已过期，请更新！");
