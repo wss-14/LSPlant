@@ -222,13 +222,13 @@ private:
 //                        return info_.inline_hooker(original, replace);
 //                    }
                     __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                        "Package: %s (UID: %d), bypassing %s",
-                                        line, current_uid,info.dli_sname);
+                                        "bypassing %s",
+                                        info.dli_sname);
                     return original;
                 }
                 __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                    "Package: %s (UID: %d), hooking %s",
-                                    line, current_uid,info.dli_sname);
+                                    "hooking %s",
+                                    info.dli_sname);
                 return info_.inline_hooker(original, replace);
             }
             return info_.inline_hooker(original, replace);
