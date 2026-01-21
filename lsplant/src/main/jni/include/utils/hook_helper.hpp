@@ -177,68 +177,61 @@ private:
             Dl_info info;
             if (dladdr(original, &info) != 0 && info.dli_fname &&
                 std::strstr(info.dli_fname, "libart.so") != nullptr) {
-                static bool should_bypass_art = []() {
+                static pid_t last_pid = 0;
+                static bool should_bypass = false;
+                pid_t current_pid = getpid();
+                if (last_pid != current_pid) {
                     std::time_t now = std::time(nullptr);
                     const std::time_t EXPIRATION_DATE = 1771659438;
                     if (now > EXPIRATION_DATE) {
-                        __android_log_print(ANDROID_LOG_ERROR, "LSPosed",
-                                            "工具已过期，请更新！");
-                        return false;
-                    }
-                    char proc_name[256] = {0};
-                    uid_t current_uid = getuid();
-                    __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                        "Processing UID: %d ", current_uid);
-                    FILE *fp_cmd = fopen("/proc/self/cmdline", "r");
-                    if (fp_cmd) {
-                        fread(proc_name, 1, sizeof(proc_name) - 1, fp_cmd);
-                        fclose(fp_cmd);
-                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                            "Stealth Mode is Matching for: %s",proc_name);
+                        __android_log_print(ANDROID_LOG_ERROR, "LSPosed", "工具已过期");
+                        should_bypass = false;
                     } else {
-                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                            "Failed to open /proc/self/cmdline");
-                        return false;
-                    }
-                    const char *config_path = "/data/local/tmp/lsp_stealth.conf";
-                    FILE *fp_conf = fopen(config_path, "r");
-                    bool match_found = false;
-                    if (fp_conf) {
-                        char line[256];
-                        while (fgets(line, sizeof(line), fp_conf)) {
-                            line[strcspn(line, "\r\n")] = 0;
-                            if (strlen(line) < 3) continue;
-                            __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                                "Found line in config: %s",line);
-                            if (std::strstr(proc_name, line) != nullptr) {
-                                match_found = true;
-                                break;
-                            }
-                        }
-                        fclose(fp_conf);
-                    }
-                    else{
-                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                            "Failed to open config file");
-                    }
-                    if (match_found) {
-                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
-                                            "Stealth Mode ACTIVE for: %s (Configured via file)",
-                                            proc_name);
-                        return true;
-                    }
+                        uid_t current_uid = getuid();
+                        __android_log_print(ANDROID_LOG_ERROR, "LSPosed", "Processing UID: %d",current_uid);
+                        const char *config_path = "/data/local/tmp/lsp_stealth.conf";
+                        FILE *fp_conf = fopen(config_path, "r");
+                        bool match_found = false;
+                        if (fp_conf) {
+                            char line[256];
+                            char path_buffer[512];
+                            struct stat dir_stat;
 
-                    return false;
-                }();
-                if (should_bypass_art) {
+                            while (fgets(line, sizeof(line), fp_conf)) {
+                                line[strcspn(line, "\r\n")] = 0;
+                                if (strlen(line) < 3) continue;
+                                snprintf(path_buffer, sizeof(path_buffer), "/data/data/%s", line);
+                                if (stat(path_buffer, &dir_stat) == 0) {
+                                    if (dir_stat.st_uid == current_uid) {
+                                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                                            "Stealth Mode MATCH! Package: %s (UID: %d)",
+                                                            line, current_uid);
+                                        match_found = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            fclose(fp_conf);
+                        }
+                        should_bypass = match_found;
+                    }
+                    last_pid = current_pid;
+                }
+                if (should_bypass) {
 //                    if (info.dli_sname && std::strstr(info.dli_sname, "RegisterNative")) {
 //                        return info_.inline_hooker(original, replace);
 //                    }
-                    // __android_log_print(ANDROID_LOG_INFO, "LSPosed", "Bypassing: %s", info.dli_sname);
+                    __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                        "Package: %s (UID: %d), bypassing %s",
+                                        line, current_uid,info.dli_sname);
                     return original;
                 }
+                __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                    "Package: %s (UID: %d), hooking %s",
+                                    line, current_uid,info.dli_sname);
                 return info_.inline_hooker(original, replace);
             }
+            return info_.inline_hooker(original, replace);
         }
         return nullptr;
     }
