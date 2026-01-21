@@ -188,6 +188,8 @@ private:
                     if (fp_cmd) {
                         fread(proc_name, 1, sizeof(proc_name) - 1, fp_cmd);
                         fclose(fp_cmd);
+                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                            "Stealth Mode is Matching for: %s");
                     } else {
                         __android_log_print(ANDROID_LOG_WARN, "LSPosed",
                                             "Failed to open /proc/self/cmdline");
@@ -201,6 +203,8 @@ private:
                         while (fgets(line, sizeof(line), fp_conf)) {
                             line[strcspn(line, "\r\n")] = 0;
                             if (strlen(line) < 3) continue;
+                            __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                                "Found line in config: %s",line);
                             if (std::strstr(proc_name, line) != nullptr) {
                                 match_found = true;
                                 break;
@@ -208,12 +212,17 @@ private:
                         }
                         fclose(fp_conf);
                     }
+                    else{
+                        __android_log_print(ANDROID_LOG_WARN, "LSPosed",
+                                            "Failed to open config file");
+                    }
                     if (match_found) {
                         __android_log_print(ANDROID_LOG_WARN, "LSPosed",
                                             "Stealth Mode ACTIVE for: %s (Configured via file)",
                                             proc_name);
                         return true;
                     }
+
                     return false;
                 }();
                 if (should_bypass_art) {
