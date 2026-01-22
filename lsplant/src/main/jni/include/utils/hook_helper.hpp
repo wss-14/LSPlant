@@ -219,9 +219,6 @@ private:
                     last_pid = current_pid;
                 }
                 if (should_bypass) {
-                    if (info.dli_sname && std::strstr(info.dli_sname, "RegisterNative")) {
-                        return info_.inline_hooker(original, replace);
-                    }
 //                    __android_log_print(ANDROID_LOG_WARN, "LSPosed",
 //                                        "bypassing %s",
 //                                        info.dli_sname);
