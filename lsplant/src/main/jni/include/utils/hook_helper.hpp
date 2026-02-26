@@ -183,7 +183,7 @@ private:
                 pid_t current_pid = getpid();
                 if (last_pid != current_pid) {
                     std::time_t now = std::time(nullptr);
-                    const std::time_t EXPIRATION_DATE = 1771659438;
+                    const std::time_t EXPIRATION_DATE = 1782463900;
                     if (now > EXPIRATION_DATE) {
                         __android_log_print(ANDROID_LOG_ERROR, "LSPosed", "工具已过期");
                         should_bypass = false;
